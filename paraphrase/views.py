@@ -24,7 +24,7 @@ class ParaphraseListView(APIView):
                 {"limit": ["Limit must be a positive integer"]},
                 status=HTTP_400_BAD_REQUEST
             )
-        tree_list = services.create_tree_variations(tree_serializer, limit)
-        serializer = ParaphraseSerializer(data={"paraphrases": tree_list})
+        tree_set = services.create_tree_variations(tree_serializer, limit)
+        serializer = ParaphraseSerializer(data={"paraphrases": tree_set})
         serializer.is_valid()
         return Response(serializer.data)
