@@ -1,5 +1,7 @@
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import (
+    HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+)
 from rest_framework.views import APIView
 
 from .serializers import ParaphraseSerializer, TreeSerializer
@@ -24,10 +26,13 @@ class ParaphraseListView(APIView):
                 {"limit": ["Limit must be a positive integer"]},
                 status=HTTP_400_BAD_REQUEST
             )
-        tree_list = services.create_tree_variations(tree_serializer, limit)
+        tree_list = services.create_tree_variations(
+            flat_tree=tree_serializer.data["tree"],
+            limit=limit
+        )
         if not tree_list:
             return Response(
-                {"tree": ["Cannot generate any variation of the given parse tree"]},
+                {"tree": ["Cannot generate any variation of the given parse tree"]},  # noqa E501
                 status=HTTP_400_BAD_REQUEST
             )
         serializer = ParaphraseSerializer(data={"paraphrases": tree_list})
