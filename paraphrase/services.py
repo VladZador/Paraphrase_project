@@ -61,32 +61,46 @@ def _index_neighbours(subtree, np_indexes):
     return _index_neighbours(rs, np_indexes)
 
 
+def _create_np_indexes_list(parented_tree):
+    np_indexes_list = []
+    for subtree in parented_tree.subtrees(filter=_check_siblings):
+        np_indexes = [subtree.treeposition()]
+        np_indexes = _index_neighbours(subtree, np_indexes)
+        np_indexes_list.append(tuple(np_indexes))
+    return np_indexes_list
+
+
 def _flatten_tree(tree):
     return ' '.join(str(tree).split())
 
 
 def _create_variation(parented_tree, index_tuple, permutation):
-    tree = Tree.fromstring(_flatten_tree(parented_tree))
+    tree = Tree.fromstring(parented_tree)
     tree_copy = tree.copy(deep=True)
     for i in range(len(index_tuple)):
         tree[index_tuple[i]] = tree_copy[permutation[i]]
     return _flatten_tree(tree)
 
 
-def create_tree_variations(tree_serializer, limit) -> set:
+def _create_tree_permutations(flat_tree, np_indexes_list, limit):
+    tree_set = {flat_tree}
+    for index_tuple in np_indexes_list:
+        for tree in tree_set.copy():
+            for perm in permutations(index_tuple):
+                if perm != index_tuple:
+                    tree_permutation = _create_variation(tree, index_tuple, perm)
+                    tree_set.add(tree_permutation)
+                    if len(tree_set) > limit:
+                        return tree_set
+    return tree_set
+
+
+def create_tree_variations(tree_serializer, limit) -> list:
     flat_tree = tree_serializer.data["tree"]
     ptree = ParentedTree.fromstring(flat_tree)
-    tree_set = {flat_tree}
-    np_indexes_list = []
-    for subtree in ptree.subtrees(filter=_check_siblings):
-        np_indexes = [subtree.treeposition()]
-        np_indexes = _index_neighbours(subtree, np_indexes)
-        np_indexes_list.append(tuple(np_indexes))
-    for index_tuple in np_indexes_list:
-        for perm in permutations(index_tuple):
-            if perm != index_tuple:
-                tree_permutation = _create_variation(ptree, index_tuple, perm)
-                tree_set.add(tree_permutation)
-
+    np_indexes_list = _create_np_indexes_list(ptree)
+    flat_tree = _flatten_tree(ptree)
+    tree_set = _create_tree_permutations(flat_tree, np_indexes_list, limit)
     tree_set.discard(flat_tree)
-    return tree_set
+
+    return [{"tree": tree_string} for tree_string in list(tree_set)[:limit]]
