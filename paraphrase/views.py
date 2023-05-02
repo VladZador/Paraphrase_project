@@ -10,6 +10,19 @@ from . import services
 
 class ParaphraseListView(APIView):
     def get(self, request):
+        """GET-request for generation of a parse tree variations
+
+        Request contains 2 query parameters:
+        "tree" (required) - a parse tree
+        "limit" (optional) - a limit on the number of tree variations
+
+        Returns {"paraphrases": [
+            {"tree": "(S tree variation)"},
+            {"tree": "(S another tree variation)}",
+            ...
+        ]}
+        """
+
         tree_serializer = TreeSerializer(
             data={"tree": request.query_params.get("tree")}
         )
